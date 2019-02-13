@@ -1,0 +1,19 @@
+{
+  "name": "treehouse-tech-degree-project-6",
+  "version": "1.0.0",
+  "description": "Content scraper for shirts4mike.com",
+  "main": "scraper.js",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "csv": "^5.1.1",
+    "csv-writer": "^1.2.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aaron Gibson",
+  "license": "MIT"
+}

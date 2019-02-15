@@ -8,7 +8,7 @@ const test = [];
 
 const csvWriter = createCsvWriter({
     header: ['Title', 'Price', 'URL', 'Image'],
-    path: 'csv/file.csv'
+    path: 'csv/file2.csv'
 });
 
 
@@ -35,60 +35,30 @@ function parse(data) {
         const shirts = [];
         for (let i = 0; i < hrefs.length; i++) {
 
-            rp('http://shirts4mike.com/' + hrefs[i])
-                .then(function (htmlString) {
-                    // Process html...
-                    const $ = cheerio.load(htmlString);
+
+
+            request('http://shirts4mike.com/' + hrefs[i], function (error, response, body) {
+                if (!error && response.statusCode === 200) {
+
+                    const $ = cheerio.load(body);
 
                     shirts.push([$('.shirt-picture span img').attr('alt'), $('.price').text(), hrefs[i], $('.shirt-picture span img').attr('src')]);
 
-                    // shirts[i][0] = $('.shirt-picture span img').attr('alt');
-                    // shirts[i][1] = $('.price').text();
-                    // shirts[i][2] = hrefs[i];
-                    // shirts[i][3] = $('.shirt-picture span img').attr('src');
-                }).then(() => {
-                    csvWriter.writeRecords(shirts)       // returns a promise
-                        .then(() => {
-                            console.log('...Done');
-                        });
-                })
-                .catch(function (err) {
-                    // Crawling failed...
-                });
 
+                    if (shirts.length === hrefs.length) {
+                        csvWriter.writeRecords(shirts)       // returns a promise
+                            .then(() => {
+                                console.log('...done scraping');
+                            });
+                    }
 
+                } else {
+                    console.log('Something went wrong!');
+                    console.log('error:', error);
+                    console.log('statusCode:', response && response.statusCode);
+                }
 
-
-            // request('http://shirts4mike.com/' + hrefs[i], function (error, response, body) {
-            //     if (!error && response.statusCode === 200) {
-
-            //         const $ = cheerio.load(body);
-
-            //         shirts.push([$('.shirt-picture span img').attr('alt'), $('.price').text(), hrefs[i], $('.shirt-picture span img').attr('src')]);
-
-            //         // shirts[i][0] = $('.shirt-picture span img').attr('alt');
-            //         // shirts[i][1] = $('.price').text();
-            //         // shirts[i][2] = hrefs[i];
-            //         // shirts[i][3] = $('.shirt-picture span img').attr('src');
-
-
-
-            //         if (i === hrefs.length - 1) {
-            //             csvWriter.writeRecords(shirts)       // returns a promise
-            //                 .then(() => {
-            //                     console.log('...Done');
-            //                 });
-            //         }
-
-
-
-            //     } else {
-            //         console.log('Something went wrong!');
-            //         console.log('error:', error);
-            //         console.log('statusCode:', response && response.statusCode);
-            //     }
-
-            // })
+            })
         }
 
     }
@@ -100,27 +70,12 @@ function createCSV(data) {
 }
 
 
-
-
-rp('http://shirts4mike.com/shirts.php')
-    .then(function (htmlString) {
-        // Process html...
-
-        parse(htmlString);
-
-    })
-    .catch(function (error) {
-        // Crawling failed...
+request('http://shirts4mike.com/shirts.php', function (error, response, body) {
+    if (!error && response.statusCode === 200) {
+        parse(body);
+    } else {
         console.log('Something went wrong!');
         console.log('error:', error);
-    });
-
-// rp('http://shirts4mike.com/shirts.php', function (error, response, body) {
-//     if (!error && response.statusCode === 200) {
-//         parse(body);
-//     } else {
-//         console.log('Something went wrong!');
-//         console.log('error:', error);
-//         console.log('statusCode:', response && response.statusCode);
-//     }
-// });
+        console.log('statusCode:', response && response.statusCode);
+    }
+});

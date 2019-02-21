@@ -1,16 +1,55 @@
 const cheerio = require('cheerio');
 const request = require('request');
-const rp = require('request-promise');
 const createCsvWriter = require('csv-writer').createArrayCsvWriter;
 const fs = require('fs');
 
-const test = [];
 
-const csvWriter = createCsvWriter({
-    header: ['Title', 'Price', 'URL', 'Image'],
-    path: 'csv/file2.csv'
-});
 
+function makeCSV(data) {
+    if (!fs.existsSync('./data')) {
+        fs.mkdir('./data', { recursive: false }, (err) => {
+            if (err) throw err;
+        });
+    }
+
+    const csvWriter = createCsvWriter({
+        header: ['Title', 'Price', 'ImageURL', 'URL', 'Time'],
+        path: './data/file4.csv'
+    });
+
+    csvWriter.writeRecords(data)       // returns a promise
+        .then(() => {
+            console.log('...done scraping');
+        });
+
+}
+
+function getTime() {
+    const date = new Date();
+
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    let seconds = date.getSeconds();
+
+
+    if (hours < 10) {
+        hours = `0${hours}`;
+    }
+
+    if (minutes < 10) {
+        minutes = `0${minutes}`;
+    }
+
+    if (seconds < 10) {
+        seconds = `0${seconds}`;
+    }
+
+
+
+
+
+    return `${hours}:${minutes}:${seconds}`;
+}
 
 
 
@@ -41,15 +80,15 @@ function parse(data) {
                 if (!error && response.statusCode === 200) {
 
                     const $ = cheerio.load(body);
+                    const time = getTime();
+                    const baseURL = 'http://shirts4mike.com/';
 
-                    shirts.push([$('.shirt-picture span img').attr('alt'), $('.price').text(), hrefs[i], $('.shirt-picture span img').attr('src')]);
+
+                    shirts.push([$('.shirt-picture span img').attr('alt'), $('.price').text(), baseURL + $('.shirt-picture span img').attr('src'), baseURL + hrefs[i], time]);
 
 
                     if (shirts.length === hrefs.length) {
-                        csvWriter.writeRecords(shirts)       // returns a promise
-                            .then(() => {
-                                console.log('...done scraping');
-                            });
+                        makeCSV(shirts);
                     }
 
                 } else {

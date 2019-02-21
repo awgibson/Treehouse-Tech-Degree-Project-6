@@ -3,18 +3,25 @@ const request = require('request');
 const createCsvWriter = require('csv-writer').createArrayCsvWriter;
 const fs = require('fs');
 
+const baseURL = 'http://shirts4mike.com/';
+
+
 
 
 function makeCSV(data) {
+    const date = getDate();
+
     if (!fs.existsSync('./data')) {
         fs.mkdir('./data', { recursive: false }, (err) => {
             if (err) throw err;
         });
     }
 
+
+
     const csvWriter = createCsvWriter({
         header: ['Title', 'Price', 'ImageURL', 'URL', 'Time'],
-        path: './data/file4.csv'
+        path: `./data/${date}.csv`
     });
 
     csvWriter.writeRecords(data)       // returns a promise
@@ -44,11 +51,28 @@ function getTime() {
         seconds = `0${seconds}`;
     }
 
-
-
-
-
     return `${hours}:${minutes}:${seconds}`;
+}
+
+function getDate() {
+    const date = new Date();
+
+    let year = date.getFullYear();
+    let day = date.getDate();
+    let month = date.getMonth();
+
+
+    if (day < 10) {
+        day = `0${day}`;
+    }
+
+    if (month < 10) {
+        month = `0${month}`;
+    }
+
+    return `${year}-${month}-${day}`;
+
+
 }
 
 
@@ -76,12 +100,11 @@ function parse(data) {
 
 
 
-            request('http://shirts4mike.com/' + hrefs[i], function (error, response, body) {
+            request(baseURL + hrefs[i], function (error, response, body) {
                 if (!error && response.statusCode === 200) {
 
                     const $ = cheerio.load(body);
                     const time = getTime();
-                    const baseURL = 'http://shirts4mike.com/';
 
 
                     shirts.push([$('.shirt-picture span img').attr('alt'), $('.price').text(), baseURL + $('.shirt-picture span img').attr('src'), baseURL + hrefs[i], time]);
@@ -92,9 +115,7 @@ function parse(data) {
                     }
 
                 } else {
-                    console.log('Something went wrong!');
-                    console.log('error:', error);
-                    console.log('statusCode:', response && response.statusCode);
+                    errors(response, error);
                 }
 
             })
@@ -104,17 +125,23 @@ function parse(data) {
     getDetails();
 }
 
-function createCSV(data) {
-
-}
-
-
-request('http://shirts4mike.com/shirts.php', function (error, response, body) {
-    if (!error && response.statusCode === 200) {
-        parse(body);
-    } else {
+function errors(response, error) {
+    if (response.statusCode === 404) {
+        console.log('Requested site was not found');
+        console.log('statusCode:', response && response.statusCode);
+    }
+    else {
         console.log('Something went wrong!');
         console.log('error:', error);
         console.log('statusCode:', response && response.statusCode);
+    }
+}
+
+
+request(`${baseURL}shirts.php`, function (error, response, body) {
+    if (!error && response.statusCode === 200) {
+        parse(body);
+    } else {
+        errors(response, error);
     }
 });

@@ -59,7 +59,7 @@ function getDate() {
 
     let year = date.getFullYear();
     let day = date.getDate();
-    let month = date.getMonth();
+    let month = date.getMonth() + 1;
 
 
     if (day < 10) {
@@ -125,16 +125,30 @@ function parse(data) {
     getDetails();
 }
 
+//------------------------------------------------//
+//Function to handle different status code errors.//
+//More can be added as needed.                    //
+//------------------------------------------------//
 function errors(response, error) {
-    if (response.statusCode === 404) {
-        console.log('Requested site was not found');
-        console.log('statusCode:', response && response.statusCode);
+    let errorMessage = `Status code ${response.statusCode}. `;
+
+    switch (response.statusCode) {
+        case 401: errorMessage += `Unauthorized access. Requires username and password`;
+            break;
+        case 403: errorMessage += `Forbidden. Permission to access was not allowed.`;
+            break;
+        case 404: errorMessage += `Not Found. Requested URL was not found.`;
+            break;
+        default: errorMessage += `Error. Unable to scrape data.`;
+            break;
     }
-    else {
-        console.log('Something went wrong!');
-        console.log('error:', error);
-        console.log('statusCode:', response && response.statusCode);
-    }
+    console.log(errorMessage);
+
+
+    fs.appendFile('scraper-error.log', `[${new Date()}] <${errorMessage}> \r\n`, function (err) {
+        if (err) throw err;
+        console.log('Error logged to scraper-error.log');
+    });
 }
 
 
